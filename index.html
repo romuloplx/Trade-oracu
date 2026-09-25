@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Trade Oracu — Analista de Opções Binárias</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📈</text></svg>">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+  <!-- ============ TOPO ============ -->
+  <header class="topbar">
+    <div class="brand">
+      <div class="brand-logo">TO</div>
+      <div class="brand-text">
+        <h1>Trade <span>Oracu</span></h1>
+        <p>Analista de opções binárias</p>
+      </div>
+    </div>
+
+    <div class="topbar-right">
+      <div class="market-pill" id="marketPill" title="O mercado forex abre domingo 17:00 ET e fecha sexta-feira 17:00 ET">
+        <span class="dot on" id="marketDot"></span>
+        <div class="market-pill-text">
+          <strong id="marketLabel">—</strong>
+          <span id="marketCountdown">—</span>
+        </div>
+      </div>
+
+      <div class="clock" id="utcClock">—</div>
+
+      <label class="force-toggle" title="Força o modo OTC para visualizar como fica quando o mercado fecha">
+        <input type="checkbox" id="forceOtc">
+        <span class="switch"></span>
+        <span class="force-label">Forçar OTC <small>(teste)</small></span>
+      </label>
+    </div>
+  </header>
+
+  <!-- ============ BANNER OTC (mercado fechado) ============ -->
+  <div class="otc-banner hidden" id="otcBanner" role="alert">
+    <span class="otc-banner-pulse"></span>
+    <div class="otc-banner-text">
+      <strong id="otcBannerTitle">MERCADO FECHADO — OPERANDO EM MODO OTC</strong>
+      <p id="otcBannerText"></p>
+    </div>
+  </div>
+
+  <!-- ============ LAYOUT PRINCIPAL ============ -->
+  <div class="layout">
+
+    <!-- ---- Sidebar de ativos ---- -->
+    <aside class="sidebar">
+      <div class="sidebar-head">
+        <h2>Ativos</h2>
+        <input type="text" id="assetSearch" placeholder="Buscar par…" autocomplete="off">
+      </div>
+
+      <div class="asset-group">
+        <h3>Mercado real <small>· seg a sex</small></h3>
+        <div class="asset-list" id="realList"></div>
+      </div>
+
+      <div class="asset-group otc-group">
+        <h3>OTC <small>· 24 horas, todos os dias</small></h3>
+        <div class="asset-list" id="otcList"></div>
+      </div>
+    </aside>
+
+    <!-- ---- Conteúdo ---- -->
+    <section class="content">
+
+      <!-- Gráfico -->
+      <div class="chart-panel">
+        <div class="chart-header">
+          <div class="chart-id">
+            <h2 id="chartPair">—</h2>
+            <em class="otc-badge hidden" id="chartOtcBadge">OTC</em>
+            <span class="state-chip" id="chartState">—</span>
+          </div>
+          <div class="chart-info">
+            <span class="price" id="chartPrice">—</span>
+            <span class="payout-chip" id="chartPayout">—</span>
+          </div>
+        </div>
+        <div class="chart-wrap">
+          <canvas id="chartCanvas"></canvas>
+          <span class="chart-watermark">SIMULAÇÃO</span>
+        </div>
+      </div>
+
+      <!-- Painéis inferiores -->
+      <div class="bottom-grid">
+
+        <!-- Operar -->
+        <div class="panel trade-panel">
+          <div class="panel-head">
+            <h3>Operar</h3>
+            <span class="balance">Saldo demo <b id="balance">R$ 10.000,00</b></span>
+          </div>
+
+          <div class="tp-row">
+            <label class="field">
+              <span>Valor (R$)</span>
+              <div class="amount-box">
+                <button type="button" id="amtMinus">−</button>
+                <input type="number" id="amount" value="50" min="1" step="1">
+                <button type="button" id="amtPlus">+</button>
+              </div>
+            </label>
+
+            <label class="field">
+              <span>Expiração</span>
+              <select id="expiry">
+                <option value="30">30 segundos</option>
+                <option value="60" selected>1 minuto</option>
+                <option value="180">3 minutos</option>
+                <option value="300">5 minutos</option>
+              </select>
+            </label>
+          </div>
+
+          <div class="tp-payout">
+            <div><span>Retorno</span><strong id="payoutPct">—</strong></div>
+            <div><span>Lucro potencial</span><strong class="tx-up" id="profitPot">—</strong></div>
+          </div>
+
+          <div class="tp-buttons">
+            <button type="button" class="btn-call" id="btnCall">
+              <span class="big">▲ CALL</span><span class="sub">Sobe</span>
+            </button>
+            <button type="button" class="btn-put" id="btnPut">
+              <span class="big">▼ PUT</span><span class="sub">Desce</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Análise -->
+        <div class="panel analyst">
+          <div class="panel-head"><h3>🧠 Análise do Oracu</h3></div>
+          <div class="signal-badge neutral" id="sigBadge">◆ NEUTRO</div>
+          <div class="conf">
+            <span>Confiança</span>
+            <div class="conf-bar"><i class="conf-bar-fill neutral" id="sigConfBar" style="width:50%"></i></div>
+            <b id="sigConf">50%</b>
+          </div>
+          <ul class="indicators">
+            <li><span>RSI (14)</span><b id="sigRsi">—</b></li>
+            <li><span>EMA 9 / 21</span><b id="sigEma">—</b></li>
+            <li><span>Tendência</span><b id="sigTrend">—</b></li>
+          </ul>
+          <p class="micro">Análise automática sobre dados simulados — não é recomendação de investimento.</p>
+        </div>
+
+        <!-- Posições -->
+        <div class="panel positions">
+          <div class="panel-head">
+            <h3>Posições abertas <span class="count" id="openCount">0</span></h3>
+          </div>
+          <ul class="trade-list" id="openTrades"></ul>
+          <div class="panel-head sub"><h3>Últimos resultados</h3></div>
+          <ul class="trade-list" id="tradeHistory"></ul>
+        </div>
+
+      </div>
+    </section>
+  </div>
+
+  <!-- ============ RODAPÉ ============ -->
+  <footer class="footer">
+    <div class="sessions" id="sessionsBar"></div>
+    <p class="micro">Dados simulados para fins educacionais. Opções binárias envolvem alto risco de perda.
+      O mercado real opera de domingo 17:00 ET até sexta-feira 17:00 ET; fora desse período, apenas pares OTC.</p>
+  </footer>
+
+  <div id="toasts"></div>
+
+  <script src="js/market.js"></script>
+  <script src="js/chart.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>
