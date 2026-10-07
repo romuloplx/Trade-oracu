@@ -1994,7 +1994,9 @@ footer b {
         <div style="flex:1;min-width:180px">
           <span style="font-size:11px;color:var(--muted)">Universo de Pares:</span>
           <select id="roboUniverso" style="width:100%;margin-top:2px">
-            <option value="todos" selected>🌐 Top 60 Pares Binance por Volume</option>
+            <option value="todos" selected>🌐 Top 150 Pares Binance por Volume (Varredura Massiva)</option>
+            <option value="todos250">🚀 Top 250 Pares Binance (Todo o Mercado Cripto)</option>
+            <option value="top60">⚡ Top 60 Pares Principais</option>
             <option value="manual">✍️ Pares Específicos</option>
           </select>
         </div>
@@ -2125,7 +2127,9 @@ footer b {
         <div style="flex:1;min-width:180px">
           <span style="font-size:11px;color:var(--muted)">Universo de Moedas Spot:</span>
           <select id="roboSpotUniverso" style="width:100%;margin-top:2px">
-            <option value="todos" selected>🌐 Top 30 Spot Binance por Volume</option>
+            <option value="todos" selected>🌐 Top 150 Spot Binance por Volume (Varredura Massiva)</option>
+            <option value="todos250">🚀 Top 250 Spot Binance (Todo o Mercado Spot)</option>
+            <option value="top60">⚡ Top 60 Moedas Principais</option>
             <option value="manual">✍️ Moedas Específicas</option>
           </select>
         </div>
@@ -4239,13 +4243,30 @@ function falarExplicacao(res, mkt){
 }
 
 /* ---------- 📡 RADAR DE FUTUROS: vasculha o mercado sozinho ---------- */
-const RADAR_SYMS = ["BTCUSDT","ETHUSDT","BNBUSDT","SOLUSDT","XRPUSDT","ADAUSDT","DOGEUSDT","AVAXUSDT","LINKUSDT","DOTUSDT","POLUSDT","LTCUSDT","UNIUSDT","ATOMUSDT","ETCUSDT","XLMUSDT","BCHUSDT","NEARUSDT","APTUSDT","FILUSDT","ARBUSDT","OPUSDT","SUIUSDT","1000PEPEUSDT","1000SHIBUSDT","RENDERUSDT","INJUSDT","FETUSDT","GRTUSDT","RUNEUSDT","AAVEUSDT","STXUSDT","IMXUSDT","TIAUSDT","SEIUSDT","ICPUSDT","ALGOUSDT","SANDUSDT","MANAUSDT","AXSUSDT","GALAUSDT","CHZUSDT","ENJUSDT","CRVUSDT","SNXUSDT","COMPUSDT","LDOUSDT","THETAUSDT","EGLDUSDT","KASUSDT","1000FLOKIUSDT","1000BONKUSDT","WIFUSDT","BOMEUSDT","NOTUSDT","IOUSDT","ZROUSDT","BLURUSDT","PORTALUSDT"];
+const RADAR_SYMS = [
+  "BTCUSDT","ETHUSDT","BNBUSDT","SOLUSDT","XRPUSDT","DOGEUSDT","ADAUSDT","AVAXUSDT","SUIUSDT","NEARUSDT",
+  "LINKUSDT","1000PEPEUSDT","1000SHIBUSDT","WIFUSDT","1000BONKUSDT","1000FLOKIUSDT","DOTUSDT","LTCUSDT","BCHUSDT","APTUSDT",
+  "ARBUSDT","OPUSDT","TIAUSDT","FTMUSDT","INJUSDT","RENDERUSDT","STXUSDT","UNIUSDT","FILUSDT","ETCUSDT",
+  "TRXUSDT","AAVEUSDT","KASUSDT","ICPUSDT","XLMUSDT","ALGOUSDT","CRVUSDT","SANDUSDT","MANAUSDT","AXSUSDT",
+  "GALAUSDT","CHZUSDT","ENJUSDT","SNXUSDT","COMPUSDT","LDOUSDT","THETAUSDT","EGLDUSDT","IMXUSDT","SEIUSDT",
+  "BOMEUSDT","NOTUSDT","IOUSDT","ZROUSDT","BLURUSDT","PORTALUSDT","JUPUSDT","PYTHUSDT","WLDUSDT","STRKUSDT",
+  "DYDXUSDT","RUNEUSDT","PENDLEUSDT","ONDOUSDT","ORDIUSDT","1000SATSUSDT","1000RATSUSDT","MEMEUSDT","BEAMXUSDT","JTOUSDT",
+  "BIGTIMEUSDT","NTRNUSDT","ALTUSDT","MANTAUSDT","PIXELUSDT","AEVOUSDT","ETHFIUSDT","ENAUSDT","TNSRUSDT","OMNIUSDT",
+  "REZUSDT","BBUSDT","ZKUSDT","LISTAUSDT","BLASTUSDT","BANANAUSDT","VOXELUSDT","TONUSDT","DOGSUSDT","CATIUSDT",
+  "HMSTRUSDT","EIGENUSDT","NEIROUSDT","TURBOUSDT","1000CATUSDT","MOODENGUSDT","GOATUSDT","PNUTUSDT","ACTUSDT","HIPPOUSDT",
+  "CETUSUSDT","COWUSDT","THEUSDT","MOVEUSDT","MEUSDT","VIRTUALUSDT","PENGUUSDT","SPXUSDT","TRUMPUSDT","MELANIAUSDT",
+  "ANIMEUSDT","BIOUSDT","PLUMEUSDT","LAYERUSDT","SONICUSDT","TAIKOUSDT","DRIFTUSDT","KMNOUSDT","ZETAUSDT","DYMUSDT",
+  "AEROUSDT","VELOUSDT","MAGICUSDT","HIGHUSDT","GMXUSDT","SSVUSDT","ACHUSDT","FXSUSDT","CVXUSDT","BLZUSDT",
+  "TRBUSDT","GASUSDT","ARKUSDT","UNFIUSDT","LOOMUSDT","BADGERUSDT","YFIUSDT","MKRUSDT","SUSHIUSDT","1INCHUSDT",
+  "CAKEUSDT","BAKEUSDT","GNSUSDT","APXUSDT","KNCUSDT","BALUSDT","PERPUSDT","WOOUSDT","DODOUSDT","POLUSDT",
+  "ATOMUSDT","GRTUSDT","FETUSDT"
+];
 const SKIP_STABLES = /^(USDC|BUSD|FDUSD|TUSD|USDP|EUR|EURI|DAI|AEUR|JPY|BRL|TRY|GBP|AUD|XUSD|USD0|USD1|USDE|USDS|BFDUSD|WBETH|GOOGL|TSLA|AAPL|AMZN|MSFT|NVDA|META|MSTR|SKHY|COIN|BABA|AMD|NFLX|BRK)/i;
 let radarOn = false, radarTimer = null, radarBusy = false;
 const opps = new Map(); // "SYM|direcao" -> oportunidade
 
 /* universo: TODOS os pares USDT da Binance com volume real (ordenados por liquidez) */
-async function radarUniverse(){
+async function radarUniverse(maxCount = 150){
   try{
     let d = null;
     for(const u of ["https://fapi.binance.com/fapi/v1/ticker/24hr", "https://data-api.binance.vision/fapi/v1/ticker/24hr", "https://data-api.binance.vision/api/v3/ticker/24hr"]){
@@ -4254,14 +4275,14 @@ async function radarUniverse(){
         if (r.ok){ const j = await r.json(); if(Array.isArray(j) && j.length){ d = j; break; } }
       }catch(_){}
     }
-    if (!d || !Array.isArray(d)) return RADAR_SYMS;
+    if (!d || !Array.isArray(d)) return RADAR_SYMS.slice(0, maxCount);
     const list = d
-      .filter(t => t.symbol && t.symbol.endsWith("USDT") && !SKIP_STABLES.test(t.symbol) && !/[^\x00-\x7F]/.test(t.symbol) && !/(UP|DOWN|BULL|BEAR)USDT$/i.test(t.symbol) && parseFloat(t.quoteVolume || t.volume || 0) >= 3e6)
+      .filter(t => t.symbol && t.symbol.endsWith("USDT") && !SKIP_STABLES.test(t.symbol) && !/[^\x00-\x7F]/.test(t.symbol) && !/(UP|DOWN|BULL|BEAR)USDT$/i.test(t.symbol) && parseFloat(t.quoteVolume || t.volume || 0) >= 1e6)
       .sort((a,b)=>parseFloat(b.quoteVolume||0)-parseFloat(a.quoteVolume||0))
       .map(t=>t.symbol)
-      .slice(0, 60);
-    return list.length ? list : RADAR_SYMS;
-  }catch(e){ return RADAR_SYMS; }
+      .slice(0, maxCount);
+    return list.length ? list : RADAR_SYMS.slice(0, maxCount);
+  }catch(e){ return RADAR_SYMS.slice(0, maxCount); }
 }
 
 /* baixa candles de vários pares em paralelo */
@@ -7007,8 +7028,19 @@ async function roboSpotCiclo() {
       return;
     }
 
-    const paresLista = roboSpotCfg.pares.split(",").map(p => p.trim()).filter(Boolean);
-    roboSpotPaint(`🟢 ROBÔ SPOT ATIVO — 🔍 Varrendo ${paresLista.length} moedas Spot (Nota ≥ ${roboSpotCfg.nota})…`);
+    let paresLista = [];
+    if (roboSpotCfg.universo === "todos") {
+      try {
+        paresLista = await radarUniverse(150);
+      } catch (_) {
+        paresLista = roboSpotCfg.pares.split(",").map(p => p.trim()).filter(Boolean);
+      }
+    } else {
+      paresLista = roboSpotCfg.pares.split(",").map(p => p.trim()).filter(Boolean);
+    }
+    if (!paresLista.length) paresLista = RADAR_SYMS.slice(0, 150);
+
+    roboSpotPaint(`🟢 ROBÔ SPOT ATIVO — 🔍 Varrendo ${paresLista.length} moedas Spot por Volume (Nota ≥ ${roboSpotCfg.nota})…`);
 
     for (let i = 0; i < paresLista.length; i++) {
       if (!roboSpotOn || roboSpotPosCache.length >= roboSpotCfg.maxPos) break;
