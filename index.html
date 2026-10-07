@@ -1637,6 +1637,7 @@ footer b {
     <div class="spacer"></div>
     <div class="pill"><span class="dot on" id="apiDot"></span><span id="apiStatus">☁️ ONLINE · rodízio da nuvem</span></div>
     <button class="btn" id="btnManual" onclick="abrirManual()" style="background:rgba(0,255,102,0.15);border:1.5px solid #00ff66;color:#00ff66;font-weight:800;font-size:12px;box-shadow:0 0 12px rgba(0,255,102,0.35);display:inline-flex;align-items:center;gap:6px;cursor:pointer">📖 <span class="manual-btn-txt">Manual do App</span></button>
+    <button class="btn primary" id="btnInstalarApp" onclick="instalarPWA()" style="background:linear-gradient(135deg,#00ff66,#00d4ff);border-color:#00ff88;color:#000;font-weight:900;font-size:12px;box-shadow:0 0 15px rgba(0,255,136,0.4);display:inline-flex;align-items:center;gap:6px;cursor:pointer">📲 Instalar App</button>
     <button class="btn" id="btnForcarUpdate" onclick="forcarAtualizacaoApp()" style="background:rgba(0,212,255,0.15);border:1.5px solid #00d4ff;color:#00d4ff;font-weight:700;font-size:12px;cursor:pointer" title="Recarrega a versão mais recente e limpa o cache do navegador">🔄 Atualizar App</button>
     <button class="btn primary" id="btnSettings">🔑 Trocar API</button>
   </header>
@@ -2550,6 +2551,31 @@ window.forcarAtualizacaoApp = async function() {
       }
     } catch (_) {}
     window.location.href = window.location.origin + window.location.pathname + '?v=' + Date.now();
+  }
+};
+
+let deferredPrompt = null;
+window.addEventListener("beforeinstallprompt", (e) => {
+  e.preventDefault();
+  deferredPrompt = e;
+  const btn = $("btnInstalarApp");
+  if (btn) btn.style.display = "inline-flex";
+});
+
+window.instalarPWA = async function() {
+  if (deferredPrompt) {
+    deferredPrompt.prompt();
+    const { outcome } = await deferredPrompt.userChoice;
+    if (outcome === "accepted") {
+      deferredPrompt = null;
+    }
+  } else {
+    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+    if (isIOS) {
+      alert("📱 Como instalar no iPhone/iPad:\n\n1. Toque no botão Compartilhar (ícone com quadrado e seta 📤 no Safari).\n2. Role para baixo e selecione 'Adicionar à Tela de Início ➕'.\n3. Pronto! O app fica na sua tela principal como um app nativo.");
+    } else {
+      alert("📱 Como instalar no Celular ou PC:\n\n1. Toque nos 3 pontinhos do navegador no canto superior direito.\n2. Selecione 'Instalar aplicativo' ou 'Adicionar à tela inicial'.\n3. O ícone do Oráculo Trader será criado na sua tela!");
+    }
   }
 };
 
@@ -5241,7 +5267,7 @@ function renderPump(){
 /* 📱 registra o service worker (instala como app; compatibilidade universal iOS/Android/PC) */
 if ("serviceWorker" in navigator) {
   window.addEventListener("load", () => {
-    navigator.serviceWorker.register("/sw.js").then(reg => {
+    navigator.serviceWorker.register("./sw.js").then(reg => {
       try { reg.update(); } catch(e){}
     }).catch(()=>{});
   });
