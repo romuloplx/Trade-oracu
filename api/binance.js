@@ -1,6 +1,6 @@
 // 🤖 Proxy assinado da Binance (Futures USDT-M e SPOT) — usado pelos Robôs do Oráculo.
 // A chave nunca fica salva no servidor: é assinada via HMAC-SHA256 e transmitida via SSL seguro.
-const crypto = require("crypto");
+import crypto from "crypto";
 
 const BASES_FUTURES_PROD = [
   "https://fapi.binance.com",
