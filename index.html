@@ -6996,9 +6996,51 @@ async function roboSpotConsultarSaldo() {
   const el = $("roboSpotConta");
   try {
     const acc = await binSpotApi("GET", "/api/v3/account");
-    const usdt = (acc.balances || []).find(b => b.asset === "USDT") || { free: "0", locked: "0" };
+    const balances = acc.balances || [];
+    const usdt = balances.find(b => b.asset === "USDT") || { free: "0", locked: "0" };
     const freeUsdt = parseFloat(usdt.free || 0);
     const lockedUsdt = parseFloat(usdt.locked || 0);
+
+    // Auto-sincroniza moedas compradas na carteira Spot com o painel ao vivo
+    const moedasComSaldo = balances.filter(b => {
+      if (b.asset === "USDT" || b.asset === "BNB" || b.asset === "LDUSDT" || b.asset === "NFT") return false;
+      const total = parseFloat(b.free || 0);
+      return total > 0.000001;
+    });
+
+    for (const b of moedasComSaldo) {
+      const sym = b.asset + "USDT";
+      const totalQtd = parseFloat(b.free || 0);
+      if (totalQtd <= 0) continue;
+      
+      const jaExiste = roboSpotPosCache.find(x => x.symbol === sym);
+      if (!jaExiste) {
+        try {
+          const t = await binSpotApi("GET", "/api/v3/ticker/price", { symbol: sym });
+          const livePr = parseFloat(t.price);
+          const valorUsdt = totalQtd * livePr;
+          if (valorUsdt >= 0.8) {
+            roboSpotPosCache.push({
+              symbol: sym,
+              asset: b.asset,
+              qtd: totalQtd,
+              precoEntrada: livePr,
+              precoAtual: livePr,
+              valorUsdt: valorUsdt,
+              maxPreco: livePr,
+              pnlPct: 0,
+              pnlUsdt: 0,
+              time: Date.now()
+            });
+          }
+        } catch (_) {}
+      }
+    }
+
+    roboSpotSalvarPos();
+    roboSpotRenderPosicoes();
+    if (window.roboFloatRefresh) window.roboFloatRefresh();
+
     if (el) {
       el.innerHTML = `💰 <b>Saldo Spot Disponível:</b> <span style="color:#00ff88;font-size:13.5px">${fmtNum(freeUsdt)} USDT</span> (Bloqueado: ${fmtNum(lockedUsdt)} USDT) · Moedas ativas: <b>${roboSpotPosCache.length}/${roboSpotCfg.maxPos}</b>`;
     }
@@ -7514,16 +7556,17 @@ testConnection();
       $(".rf-body").innerHTML = `<div class="rf-empty" style="color:#e9a66a">⚠️ ${(e.message||e).slice(0,80)}</div>`;
       return;
     }
-    w.classList.toggle("ligado", pos.length>0);
-    if(!pos.length){
-      $(".rf-body").innerHTML = `<div class="rf-empty">Sem posições abertas no momento.<br><small style="opacity:.7">O robô está caçando entradas…</small></div>`;
-    }else{
-      $(".rf-body").innerHTML = pos.map(p=>{
-        const cls = (p.pnl>=0)?"pos":"neg";
-        const emoji = p.side==="LONG"?"🟢":"🔴";
+    const temSpot = window.roboSpotPosCache && window.roboSpotPosCache.length > 0;
+    w.classList.toggle("ligado", pos.length > 0 || temSpot);
+
+    let htmlPos = "";
+    if (pos.length > 0) {
+      htmlPos += pos.map(p => {
+        const cls = (p.pnl >= 0) ? "pos" : "neg";
+        const emoji = p.side === "LONG" ? "🟢" : "🔴";
         const pnlPctTxt = isFinite(p.pnlPct) ? ` (${p.pnlPct >= 0 ? "+" : ""}${p.pnlPct.toFixed(2)}%)` : "";
         return `<div class="rf-pos ${cls}" data-sym="${p.symbol}">
-          <div class="r-sym">${emoji} ${p.symbol.replace("USDT","")}</div>
+          <div class="r-sym">${emoji} ${p.symbol.replace("USDT","")} <small style="color:var(--green);font-size:10px">FUT</small></div>
           <div class="r-lado">${p.side} ${p.leverage}x</div>
           <div class="r-preco">ent ${fmtPreco(p.entrada)} · now <b style="color:${p.pnl>=0?'#00ff66':'#ff4444'}">${fmtPreco(p.mark)}</b></div>
           <div class="r-pnl ${cls}">${fmtP(p.pnl)}<small style="font-size:10.5px;opacity:0.85">${pnlPctTxt}</small></div>
@@ -7533,6 +7576,30 @@ testConnection();
           </div>
         </div>`;
       }).join("");
+    }
+
+    if (temSpot) {
+      htmlPos += window.roboSpotPosCache.map(sp => {
+        const pnl = sp.pnlPct || 0;
+        const isPos = pnl >= 0;
+        const cls = isPos ? "pos" : "neg";
+        return `<div class="rf-pos ${cls}" style="border-left-color:#00d4ff">
+          <div class="r-sym">💎 ${sp.symbol.replace("USDT","")} <small style="color:#00d4ff;font-size:10px">SPOT</small></div>
+          <div class="r-lado" style="color:#00d4ff;background:rgba(0,212,255,0.12)">SPOT 1x</div>
+          <div class="r-preco">ent $${fmtPreco(sp.precoEntrada)} · now <b style="color:${isPos?'#00ff88':'#ff4444'}">$${fmtPreco(sp.precoAtual||sp.precoEntrada)}</b></div>
+          <div class="r-pnl ${cls}">${isPos ? "+" : ""}${pnl.toFixed(2)}%<small style="font-size:10.5px;opacity:0.85"> (${isPos ? "+" : ""}$${(sp.pnlUsdt||0).toFixed(2)})</small></div>
+          <div class="r-x">qtd ${fmtQtd(sp.qtd)}</div>
+          <div class="r-btns">
+            <button onclick="window.roboSpotVender && window.roboSpotVender('${sp.symbol}', 'Fechamento manual pelo widget')" style="border-color:rgba(0,212,255,0.4);color:#00d4ff">⚡ Vender Spot</button>
+          </div>
+        </div>`;
+      }).join("");
+    }
+
+    if (!htmlPos) {
+      $(".rf-body").innerHTML = `<div class="rf-empty">Sem posições abertas no momento.<br><small style="opacity:.7">Os robôs estão caçando entradas…</small></div>`;
+    } else {
+      $(".rf-body").innerHTML = htmlPos;
     }
     if(acc){
       const u=(acc.assets||[]).find(a=>a.asset==="USDT")||{};
