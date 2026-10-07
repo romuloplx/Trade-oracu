@@ -66,7 +66,7 @@ export default async function handler(req, res) {
 
   const assinado = !PUBLICOS.has(caminho);
   const p = Object.assign({}, params);
-  const headers = { "Content-Type": "application/json" };
+  const headers = {};
   if (assinado) {
     if (!key || !secret) return res.status(400).json({ ok: false, erro: "Informe a API key e o secret da Binance." });
     p.timestamp = Date.now();
